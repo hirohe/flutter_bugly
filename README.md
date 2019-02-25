@@ -14,7 +14,7 @@
 dependencies:
   flutter_bugly:
     git:
-      url: git://github.com/crazecoder/flutter_bugly.git
+      url: gitlab@132.102.99.72:mirrors/flutter_bugly.git
       
 //support 
 dependencies:
