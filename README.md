@@ -11,16 +11,15 @@
 --
 ```yaml
 //因为大部分主流插件都已升级androidx，所以pub库升级androidx
-//androidx 
+//androidx
 dependencies:
   flutter_bugly: lastVersion
-  
+
 //support
 dependencies:
   flutter_bugly:
     git:
-      url: git://github.com/crazecoder/flutter_bugly.git
-      ref: dev
+      url: gitlab@132.102.99.72:mirrors/flutter_bugly.git
 ```
 
 二、项目配置
@@ -72,6 +71,7 @@ flutter build apk --release --target-platform android-arm
  int initDelay = 0, //延迟初始化，单位秒
  int upgradeCheckPeriod = 0, //升级检查周期设置,单位秒
  
+ 
  //手动检查更新
  checkUpgrade({
      bool isManual = false,//用户手动点击检查，非用户点击操作请传false
@@ -107,7 +107,7 @@ UpgradeInfo参数：
 
 1、flutter异常上报不属于崩溃，所以如需查看flutter的异常上报，请在【错误分析】tab页查看
 
-![](https://github.com/crazecoder/flutter_bugly/blob/1ff1928b3215a8fa1c8fb99c3071692da322e278/screenshot/crash.png)
+![](https://raw.githubusercontent.com/crazecoder/flutter_bugly/master/screenshot/crash.png)
 
 
 2、iOS的异常上报没有过多测试，如出现问题请issue
@@ -119,11 +119,4 @@ UpgradeInfo参数：
 2、官方没有适配8.0的notification，所以如果需要用到notification的时候请关闭后（默认关闭），自己写相关业务逻辑，或者直接把gradle里的targetSdkVersion设成26以下（方法见示例）
 
 3、请勿在targetSdkVersion 26以上设置autoDownloadOnWifi = true，会导致在8.0以上机型更新策略没有反应
-
-
-非常感谢您的支持
--------
-微信赞赏码
-
-![](https://github.com/crazecoder/flutter_bugly/blob/39a53324ee419ab045ce09c44971ee7b1f35d3c7/image/mm_reward_qrcode.png)
 
