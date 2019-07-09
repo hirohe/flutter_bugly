@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.text.TextUtils;
 
 import com.crazecoder.flutterbugly.bean.BuglyInitResultInfo;
+import com.crazecoder.flutterbugly.callback.UpgradeCallback;
 import com.crazecoder.flutterbugly.utils.JsonUtil;
 import com.crazecoder.flutterbugly.utils.MapUtil;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.bugly.beta.UpgradeInfo;
+import com.tencent.bugly.beta.upgrade.UpgradeListener;
 import com.tencent.bugly.crashreport.CrashReport;
 
 import java.util.ArrayList;
@@ -29,6 +31,8 @@ public class FlutterBuglyPlugin implements MethodCallHandler {
     private Activity activity;
     private Result result;
     private boolean isResultSubmitted = false;
+    private UpgradeInfo upgradeInfo;
+    private static UpgradeCallback callback;
 
 
     public FlutterBuglyPlugin(Activity activity) {
@@ -50,6 +54,9 @@ public class FlutterBuglyPlugin implements MethodCallHandler {
         this.result = result;
         if (call.method.equals("initBugly")) {
             if (call.hasArgument("appId")) {
+                if (call.hasArgument("autoInit")) {
+                    Beta.autoInit = false;
+                }
                 if (call.hasArgument("enableHotfix")) {
                     Beta.enableHotfix = call.argument("enableHotfix");
                 }
@@ -77,23 +84,74 @@ public class FlutterBuglyPlugin implements MethodCallHandler {
                     Beta.canShowApkInfo = call.argument("canShowApkInfo");
                 }
                 Beta.canShowUpgradeActs.add(activity.getClass());
+                /*在application中初始化时设置监听，监听策略的收取*/
+                Beta.upgradeListener = new UpgradeListener() {
+                    @Override
+                    public void onUpgrade(int ret, UpgradeInfo strategy, boolean isManual, boolean isSilence) {
+                        if (callback != null) {
+                            callback.onUpgrade(strategy);
+                        }
+                    }
+                };
                 Bugly.init(activity.getApplicationContext(), call.argument("appId").toString(), BuildConfig.DEBUG);
+                if (call.hasArgument("channel")) {
+                    String channel = call.argument("channel");
+                    if (!TextUtils.isEmpty(channel))
+                        Bugly.setAppChannel(activity.getApplicationContext(), channel);
+                }
                 result(getResultBean(true, "Bugly 初始化成功"));
             } else {
                 result(getResultBean(false, "Bugly key不能为空"));
             }
+        } else if (call.method.equals("setUserId")) {
+            if (call.hasArgument("userId")) {
+                String userId = call.argument("userId");
+                Bugly.setUserId(activity.getApplicationContext(), userId);
+            }
+            result(null);
+        } else if (call.method.equals("setUserTag")) {
+            if (call.hasArgument("userTag")) {
+                Integer userTag = call.argument("userTag");
+                if (userTag != null)
+                    Bugly.setUserTag(activity.getApplicationContext(), userTag);
+            }
+            result(null);
+        } else if (call.method.equals("putUserData")) {
+            if (call.hasArgument("key") && call.hasArgument("value")) {
+                String userDataKey = call.argument("key");
+                String userDataValue = call.argument("value");
+                Bugly.putUserData(activity.getApplicationContext(), userDataKey, userDataValue);
+            }
+            result(null);
         } else if (call.method.equals("checkUpgrade")) {
             boolean isManual = false;
             boolean isSilence = false;
+            boolean useCache = true;
             if (call.hasArgument("isManual")) {
                 isManual = call.argument("isManual");
             }
             if (call.hasArgument("isSilence")) {
                 isSilence = call.argument("isSilence");
             }
+            if (call.hasArgument("useCache")) {
+                useCache = call.argument("cache");
+            }
+            final boolean finalUseCache = useCache;
+            callback = new UpgradeCallback() {
+                @Override
+                public void onUpgrade(UpgradeInfo strategy) {
+                    if(finalUseCache){
+                        if (strategy != null) {
+                            upgradeInfo = strategy;
+                        }
+                        result(upgradeInfo);
+                    }else {
+                        result(strategy);
+                    }
+                }
+            };
             Beta.checkUpgrade(isManual, isSilence);
-            result(null);
-        } else if (call.method.equals("upgradeListener")) {
+        } else if (call.method.equals("getUpgradeInfo")) {
             UpgradeInfo strategy = Beta.getUpgradeInfo();
             result(strategy);
         } else if (call.method.equals("postCatchedException")) {
