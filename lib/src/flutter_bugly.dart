@@ -151,6 +151,13 @@ class FlutterBugly {
     });
   }
 
+  static void postCatchedExceptionOnce(dynamic error, dynamic stackTrace) async {
+    var map = {};
+    map.putIfAbsent("crash_message", () => error.toString());
+    map.putIfAbsent("crash_detail", () => stackTrace.toString());
+    await _channel.invokeMethod('postCatchedException', map);
+  }
+
   static UpgradeInfo _decodeUpgradeInfo(String jsonStr) {
     if (jsonStr == null || jsonStr.isEmpty) return null;
     Map resultMap = json.decode(jsonStr);
