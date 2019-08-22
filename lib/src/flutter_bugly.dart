@@ -105,21 +105,15 @@ class FlutterBugly {
   ///异常上报
   static void postCatchedException<T>(
     T callback(), {
-    bool useLog = false, //是否打印，默认不打印异常
     FlutterExceptionHandler handler, //异常捕捉，用于自定义打印异常
     String filterRegExp, //异常上报过滤正则，针对message
   }) {
+    bool _isDebug = false;
+    assert(_isDebug = true);
     var map = {};
     // This captures errors reported by the Flutter framework.
     FlutterError.onError = (FlutterErrorDetails details) async {
-      if (useLog || handler != null) {
-        // In development mode simply print to console.
-        handler == null
-            ? FlutterError.dumpErrorToConsole(details)
-            : handler(details);
-      } else {
         Zone.current.handleUncaughtError(details.exception, details.stack);
-      }
     };
 
     // This creates a [Zone] that contains the Flutter application and stablishes
@@ -136,6 +130,14 @@ class FlutterBugly {
     runZoned<Future<Null>>(() async {
       callback();
     }, onError: (error, stackTrace) async {
+      //默认debug下打印异常，不上传异常
+      if (_isDebug) {
+        var details = FlutterErrorDetails(exception: error, stack: stackTrace);
+        handler == null
+            ? FlutterError.dumpErrorToConsole(details)
+            : handler(details);
+        return;
+      }
       var errorStr = error.toString();
       //异常过滤
       if (filterRegExp != null) {
@@ -164,5 +166,4 @@ class FlutterBugly {
     var info = UpgradeInfo.fromJson(resultMap);
     return info;
   }
-
 }

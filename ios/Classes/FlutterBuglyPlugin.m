@@ -24,13 +24,13 @@
           [Bugly startWithAppId:appId config:config];
           NSLog(@"Bugly appId: %@", appId);
 
-          NSDictionary * dict = @{@"message":@"Bugly 初始化成功", @"isSuccess":@YES};
+          NSDictionary * dict = @{@"message":@"Bugly 初始化成功",@"appId":appId, @"isSuccess":@YES};
           NSData * jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:nil];
           NSString * json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-          
+
           result(json);
       }else{
-          NSDictionary * dict = @{@"message":@"Bugly 初始化失败", @"isSuccess":@NO};
+          NSDictionary * dict = @{@"message":@"Bugly appId不能为空", @"isSuccess":@NO};
           NSData * jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:nil];
           NSString * json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
           
@@ -46,10 +46,16 @@
       if ([crash_detail isKindOfClass:[NSNull class]]) {
           crash_message = @"";
       }
-      NSException* ex = [[NSException alloc]initWithName:crash_message
-                                                  reason:crash_detail
-                                                userInfo:nil];
-      [Bugly reportException:ex];
+      NSArray *stackTraceArray = [crash_detail componentsSeparatedByString:@""];
+      NSMutableDictionary *dic=[NSMutableDictionary dictionary];
+
+
+      [Bugly reportExceptionWithCategory:5 name:crash_message reason:@" " callStack:stackTraceArray extraInfo:dic terminateApp:NO];
+
+//      NSException* ex = [[NSException alloc]initWithName:crash_message
+//                                                  reason:crash_detail
+//                                                userInfo:nil];
+//      [Bugly reportException:ex];
       result(nil);
   }else if([@"setUserId" isEqualToString:call.method]){
       NSString *userId = call.arguments[@"userId"];
